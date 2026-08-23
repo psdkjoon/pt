@@ -1,0 +1,9 @@
+# Dart / Pub
+.dart_tool/
+pubspec.lock
+
+# Env / Token
+.env
+
+# Build / Output
+pt

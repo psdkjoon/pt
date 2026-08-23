@@ -1,0 +1,7 @@
+name: pt
+environment:
+  sdk: ^3.5.0
+dependencies:
+  html: ^0.15.6
+  http: ^1.6.0
+  ptgb: ^2.0.0
