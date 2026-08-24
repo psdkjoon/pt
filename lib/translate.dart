@@ -1,9 +1,17 @@
 import 'package:html/parser.dart' as html_parser;
 import 'package:http/http.dart' as http;
 
-Future<String> translate(String text) async {
+Future<String> autoTrans(String text) async {
+  String trans = await translate(text);
+  if (trans.codeUnits.any((i) => i >= 1550 && i <= 1750)) {
+    trans = await translate(trans, 'ru');
+  }
+  return trans;
+}
+
+Future<String> translate(String text, [String target = 'auto']) async {
   try {
-    final refererUrl = 'https://abadis.ir/translator/fa-ru/get';
+    final refererUrl = 'https://abadis.ir/translator/fa-$target/get';
     final url = Uri.parse('https://abadis.ir/ajaxcmd/inlinetranslate/');
     final res = await http.post(
       url,

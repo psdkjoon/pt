@@ -4,4 +4,4 @@ environment:
 dependencies:
   html: ^0.15.6
   http: ^1.6.0
-  ptgb: ^2.0.0
+  ptgb: ^2.0.1

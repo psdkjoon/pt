@@ -7,7 +7,7 @@ void main() async {
     final query = update.inlineQuery;
     if (query == null) continue;
     final text = query.query.trim();
-    final trans = await translate(text);
+    final trans = await autoTrans(text);
     final results = <InlineQueryResult>[
       InlineQueryResultArticle(
         '1',
