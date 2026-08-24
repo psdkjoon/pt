@@ -1,35 +1,65 @@
-import 'package:html/parser.dart' as html_parser;
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:http/http.dart' as http;
 
-Future<String> autoTrans(String text) async {
-  String trans = await translate(text);
-  if (trans.codeUnits.any((i) => i >= 1550 && i <= 1750)) {
-    trans = await translate(trans, 'ru');
-  }
-  return trans;
+final http.Client _client = http.Client();
+final String _ucid = _generateUcid();
+int _requestId = 0;
+
+const _userAgent =
+    'ru.yandex.translate/22.11.8.22364114 (samsung SM-A505GM; Android 12)';
+
+String _generateUcid() {
+  final rnd = Random.secure();
+  final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
+  return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 }
 
-Future<String> translate(String text, [String target = 'auto']) async {
+String _nextSid() {
+  final sid = '$_ucid-$_requestId-0';
+  _requestId++;
+  return sid;
+}
+
+void main() async {
+  print(await translate('Hello'));
+  _client.close();
+}
+
+Future<String> autoTrans(String text) async {
+  if (text.codeUnits.any((i) => i >= 1550 && i <= 1750)) {
+    return translate(text, 'fa');
+  }
+  return translate(text);
+}
+
+Future<String> translate(
+  String text, [
+  String from = 'en',
+  String to = 'ru',
+]) async {
   try {
-    final refererUrl = 'https://abadis.ir/translator/fa-$target/get';
-    final url = Uri.parse('https://abadis.ir/ajaxcmd/inlinetranslate/');
-    final res = await http.post(
+    final url = Uri.parse(
+      'https://translate.yandex.net/api/v1/tr.json/translate',
+    ).replace(queryParameters: {
+      'sid': _nextSid(),
+      'srv': 'android',
+      'format': 'text',
+    });
+
+    final res = await _client.post(
       url,
-      headers: {
-        'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': refererUrl,
-        'Accept': '*/*',
-        'Accept-Language': 'en-GB,en;q=0.9,fa;q=0.8',
-        'Origin': 'https://abadis.ir',
-      },
-      body: {'ln': 'ru', 'exp': text},
-    ).timeout(Duration(seconds: 10));
-    final document = html_parser.parse(res.body);
-    final div = document.querySelector('.boxMain');
-    final translatedText = div!.text.trim();
-    return translatedText;
+      headers: {'User-Agent': _userAgent},
+      body: {'text': text, 'lang': '$from-$to'},
+    ).timeout(const Duration(seconds: 30));
+
+    final decoded = jsonDecode(res.body) as Map<String, dynamic>;
+    if (decoded['code'] != 200) {
+      return 'Error code: ${decoded['code']}';
+    }
+    return (decoded['text'] as List).first as String;
   } catch (e) {
-    return 'e';
+    return e.toString();
   }
 }
