@@ -27,7 +27,36 @@ void main() async {
   _client.close();
 }
 
+const _langAliases = {
+  'sp': 'es',
+  'ge': 'de',
+  'ch': 'zh',
+  'jp': 'ja',
+  'kr': 'ko',
+  'ir': 'fa',
+  'ua': 'uk',
+};
+
+final _directive = RegExp(
+  r'^(.*?)\s+([a-z]{2,3}):([a-z]{2,3})$',
+  caseSensitive: false,
+  dotAll: true,
+);
+
 Future<String> autoTrans(String text) async {
+  final m = _directive.firstMatch(text.trim());
+  if (m != null) {
+    final body = m.group(1)!.trim();
+    final from = m.group(2)!.toLowerCase();
+    final to = m.group(3)!.toLowerCase();
+    if (body.isNotEmpty) {
+      return translate(
+        body,
+        _langAliases[from] ?? from,
+        _langAliases[to] ?? to,
+      );
+    }
+  }
   if (text.codeUnits.any((i) => i >= 1550 && i <= 1750)) {
     return translate(text, 'fa');
   }
